@@ -1,7 +1,15 @@
 <?php
+//ä½ çš„å¯†é’¥
+$accessKeyId = "";
+$accessKeySecret = "";
+//è¦è§£æžçš„åŸŸåè®°å½•
+$records = [
+    'vagrant.cn'=>['test','test.test','txt']
+];
+
 /**
  *
- *    Sakura DDNS °¢ÀïÔÆ ÍòÍø DDNS
+ *    Sakura DDNS é˜¿é‡Œäº‘ ä¸‡ç½‘ DDNS
  *
  *    GNU General Public License V3
  *
@@ -11,10 +19,10 @@ class AliyunDNS {
     public $data;
     public $accessKeyId;
     public $accessKeySecret;
-    public $url;
+    public $url = "http://alidns.aliyuncs.com/?";
+    private $param;
 
-    public function __construct( $url, $KeyId, $KeySecret) {
-        $this->url = $url;
+    public function __construct( $KeyId, $KeySecret) {
         $this->accessKeyId = $KeyId;
         $this->accessKeySecret = $KeySecret;
 
@@ -51,131 +59,116 @@ class AliyunDNS {
     }
 
     public function callInterface() {
-        $this->data['Signature'] = $this->computeSignature($this->data, $this->accessKeySecret);
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->url . http_build_query($this->data));
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $res = curl_exec($ch);
-        return $res;
+        $this->param['Signature'] = $this->computeSignature($this->param, $this->accessKeySecret);
+        return file_get_contents($this->url . http_build_query($this->param));
     }
 
-    public function addRecord()
+    /**
+     * @param $RR
+     * @param $value
+     * @param $domain
+     * @param string $type
+     * @param int $ttl
+     * @return bool|string
+     */
+    public function addRecord($RR, $value, $domain, $type='A', $ttl=600)
     {
-
+        $arr = Array(
+            "Action" => "AddDomainRecord",    // ä¸šåŠ¡ç±»åž‹æ ‡è¯†ï¼Œè¯·å‹¿ä¿®æ”¹
+            "DomainName" => $domain,          // è¦è§£æžçš„åŸŸå
+            "Value" => $value,                          // è®°å½•å€¼ï¼Œç•™ç©ºï¼Œè¯·å‹¿ä¿®æ”¹
+            "RR" => $RR,                         // è§£æžä¸»æœºåï¼Œæ”¹ä¸ºä½ éœ€è¦çš„
+            "Type" => $type,                          // è®°å½•ç±»åž‹ï¼Œè¯·å‹¿ä¿®æ”¹
+            "TTL" => $ttl                            // TTL ç”Ÿå­˜æ—¶é—´ï¼Œé»˜è®¤ 600
+        );
+        $this->param = array_merge($this->data, $arr);
+        return $this->callInterface();
     }
 
+    /**
+     * @param $recordId
+     * @param $RR
+     * @param $value
+     * @param $domain
+     * @param string $type
+     * @param int $ttl
+     * @return bool|string
+     */
     public function updateRecord($recordId, $RR, $value, $domain, $type='A',$ttl=600)
     {
         $arr = Array(
-            "Action" => "UpdateDomainRecord",    // ÒµÎñÀàÐÍ±êÊ¶£¬ÇëÎðÐÞ¸Ä
-            "DomainName" => $domain,          // Òª½âÎöµÄÓòÃû
-            "RecordID" => $recordId,                       // ¼ÇÂ¼ID£¬Áô¿Õ£¬ÇëÎðÐÞ¸Ä
-            "Value" => $value,                          // ¼ÇÂ¼Öµ£¬Áô¿Õ£¬ÇëÎðÐÞ¸Ä
-            "RR" => $RR,                         // ½âÎöÖ÷»úÃû£¬¸ÄÎªÄãÐèÒªµÄ
-            "Type" => $type,                          // ¼ÇÂ¼ÀàÐÍ£¬ÇëÎðÐÞ¸Ä
-            "TTL" => $ttl                            // TTL Éú´æÊ±¼ä£¬Ä¬ÈÏ 600
+            "Action" => "UpdateDomainRecord",    // ä¸šåŠ¡ç±»åž‹æ ‡è¯†ï¼Œè¯·å‹¿ä¿®æ”¹
+            "DomainName" => $domain,          // è¦è§£æžçš„åŸŸå
+            "RecordID" => $recordId,                       // è®°å½•IDï¼Œç•™ç©ºï¼Œè¯·å‹¿ä¿®æ”¹
+            "Value" => $value,                          // è®°å½•å€¼ï¼Œç•™ç©ºï¼Œè¯·å‹¿ä¿®æ”¹
+            "RR" => $RR,                         // è§£æžä¸»æœºåï¼Œæ”¹ä¸ºä½ éœ€è¦çš„
+            "Type" => $type,                          // è®°å½•ç±»åž‹ï¼Œè¯·å‹¿ä¿®æ”¹
+            "TTL" => $ttl                            // TTL ç”Ÿå­˜æ—¶é—´ï¼Œé»˜è®¤ 600
         );
-        $this->data = array_merge($this->data, $arr);
+        $this->param = array_merge($this->data, $arr);
         return $this->callInterface();
 
     }
 
-    public function describeRecords()
+    /**
+     * @param string $domain è¦è§£æžçš„åŸŸå
+     * @param string $type  è®°å½•ç±»åž‹A,txt...
+     * @param int $pageNum
+     * @param int $pageSize
+     * @return bool|string
+     */
+    public function describeRecords($domain, $type='', $pageSize=10 ,$pageNum=1)
     {
         $arr = Array(
-            "Action" => "DescribeDomainRecords",    // ÒµÎñÀàÐÍ±êÊ¶£¬ÇëÎðÐÞ¸Ä
-            "DomainName" => "vagrant.cn",          // Òª½âÎöµÄÓòÃû
-            "RecordID" => "",                       // ¼ÇÂ¼ID£¬Áô¿Õ£¬ÇëÎðÐÞ¸Ä
-            "Value" => "",                          // ¼ÇÂ¼Öµ£¬Áô¿Õ£¬ÇëÎðÐÞ¸Ä
-            "RR" => "ddns.ddns",                         // ½âÎöÖ÷»úÃû£¬¸ÄÎªÄãÐèÒªµÄ
-            "Type" => "A",                          // ¼ÇÂ¼ÀàÐÍ£¬ÇëÎðÐÞ¸Ä
-            "TTL" => 600                            // TTL Éú´æÊ±¼ä£¬Ä¬ÈÏ 600
+            "Action" => "DescribeDomainRecords",    // ä¸šåŠ¡ç±»åž‹æ ‡è¯†ï¼Œè¯·å‹¿ä¿®æ”¹
+            "DomainName" => $domain,          // è¦è§£æžçš„åŸŸå
+            'pageSize'=>$pageSize,
+            'PageNumber'=>$pageNum,
         );
-        $this->data = array_merge($this->data, $arr);
+        if($type){
+            $arr['type'] = $type;
+        }
+        $this->param = array_merge($this->data, $arr);
         return $this->callInterface();
     }
-}
-
-/*
- *
- *    Config ÅäÖÃ
- *
- */
-
-$url = "http://alidns.aliyuncs.com/?";
-$api = "http://2017.ip138.com/ic.asp";      // »ñÈ¡±¾»ú IP µØÖ·µÄ API
-
-$accessKeyId = "6ltpchfckx9h8htgayp1txda";
-$accessKeySecret = "GbJioobYI2qRmPex+WYOvpPgS5Q=";
-
-$arr = Array(
-    "Action" => "DescribeDomainRecords",    // ÒµÎñÀàÐÍ±êÊ¶£¬ÇëÎðÐÞ¸Ä
-    "DomainName" => "vagrant.cn",          // Òª½âÎöµÄÓòÃû
-    "RecordID" => "",                       // ¼ÇÂ¼ID£¬Áô¿Õ£¬ÇëÎðÐÞ¸Ä
-    "Value" => "",                          // ¼ÇÂ¼Öµ£¬Áô¿Õ£¬ÇëÎðÐÞ¸Ä
-    "RR" => "ddns.ddns",                         // ½âÎöÖ÷»úÃû£¬¸ÄÎªÄãÐèÒªµÄ
-    "Type" => "A",                          // ¼ÇÂ¼ÀàÐÍ£¬ÇëÎðÐÞ¸Ä
-    "TTL" => 600                            // TTL Éú´æÊ±¼ä£¬Ä¬ÈÏ 600
-);
-
-/**
- * »ñÈ¡±¾»úÍâÍøIP
- * @return bool|false|string
- */
-function localOutIp()
-{
-    $outIpApi='https://myip.biturl.top/';
-    $localIp = file_get_contents($outIpApi);
-    $b = preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/", $localIp);
-    if ($b !==1) {
-        return false;
-    }
-    return $localIp;
-}
-
-/*
- *
- *    Request & Update ÇëÇóÓëÓòÃû½âÎö¸üÐÂ
- *
- */
-
-$NewIP = localOutIp();
-$obj = new AliyunDNS($url, $accessKeyId, $accessKeySecret);
-$recordList = json_decode($obj->callInterface(), true);
-if(!$recordList) {
-    echo "Failed get record list!";
-    exit;
-}
-if(isset($recordList["DomainRecords"]["Record"])) {
-    foreach($recordList["DomainRecords"]["Record"] as $id => $record) {
-        if($record["RR"] == $arr["RR"] && $record["Type"] == "A") {
-            $arr["RecordId"] = $record["RecordId"];
-            $arr["Action"] = "UpdateDomainRecord";
-
-            $arr["Value"] = $NewIP;
-
-            if($arr["RecordId"] !== "" && $arr["Value"] !== "") {
-                $obj = new AliyunDNS($arr, $url, $accessKeyId, $accessKeySecret);
-                $result = json_decode($obj->callInterface(), true);
-
-                if(isset($result["RecordId"]) && $result["RecordId"] == $record["RecordId"]) {
-                    echo "Successful update domain record.";
-                    exit;
-                } else {
-                    if(isset($result["Message"])) {
-                        echo $result["Message"];
-                    } else {
-                        print_r($result);
-                    }
-                }
-            } else {
-                echo "Failed to get the ip address.";
-                exit;
-            }
+    /**
+     * èŽ·å–æœ¬æœºå¤–ç½‘IP
+     * @return bool|false|string
+     */
+    public static function localOutIp()
+    {
+        $outIpApi='https://myip.biturl.top/';
+        $localIp = file_get_contents($outIpApi);
+        $b = preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/", $localIp);
+        if ($b !==1) {
+            return false;
         }
+        return $localIp;
     }
-} else {
-    echo "Empty record list.";
-    exit;
+}
+
+
+$newIP = AliyunDNS::localOutIp();
+$obj = new AliyunDNS($accessKeyId, $accessKeySecret);
+foreach($records as $domain=>$subList){
+    $recordList = json_decode($obj->describeRecords($domain,'A'), true);
+    $recordList = $recordList['DomainRecords']['Record']??[];
+    if($recordList) {
+        $recordList = array_combine(array_column($recordList,'RR'), $recordList);
+    }
+    foreach($subList as $sub){
+        if(isset($recordList[$sub])){
+            echo json_encode($recordList[$sub]),PHP_EOL,$newIP,PHP_EOL;
+            if($recordList[$sub]['Value']==$newIP){
+                echo "record already exist",PHP_EOL;
+                continue;
+            }
+            $result = $obj->updateRecord($recordList[$subList]['RecordId'],$sub, $newIP,$domain);
+            echo "update",PHP_EOL;
+        }else{
+            $result = $obj->addRecord($sub, $newIP, $domain);
+            echo "add", PHP_EOL;
+        }
+        echo $result, PHP_EOL;
+    }
 }

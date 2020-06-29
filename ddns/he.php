@@ -6,19 +6,8 @@ $conf = [
     'recordUrl' =>'http://dns.series.ink/?a=query&dns=%s&domain=%s&type=%s',//域名解析记录查询接口
     'dnsTpl' =>'https://%s:%s@dyn.dns.he.net/nic/update?hostname=%s&myip=%s',//域名记录更新接口
     'names'=>[
-        ['name'=>'series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'www.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'dns.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'home.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'cloud.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'nextcloud.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'ping.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'fa.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'nav.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'ssl.series.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-
-        ['name'=>'classic.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
-        ['name'=>'www.classic.ink','key'=>'xlh#$%^3456','ns'=>'ns1.he.net'],
+        ['name'=>'series.ink','key'=>'xxxxxxx','ns'=>'ns1.he.net'],
+        ['name'=>'www.series.ink','key'=>'xxxxxxx','ns'=>'ns1.he.net'],
     ],
 ];
 
