@@ -4,7 +4,7 @@ $accessKeyId = "";
 $accessKeySecret = "";
 //要解析的域名记录
 $records = [
-    'vagrant.cn'=>['test','test.test','txt']
+    'series.ink'=>['www','ssl','nav','@','fa','ping','nextcloud','cloud','home','dns','monitor','test']
 ];
 
 /**
@@ -58,9 +58,16 @@ class AliyunDNS {
         return $signature;
     }
 
-    public function callInterface() {
+    public function callInterface($debug=0) {
+        $this->param['SignatureNonce'] = uniqid();
         $this->param['Signature'] = $this->computeSignature($this->param, $this->accessKeySecret);
-        return file_get_contents($this->url . http_build_query($this->param));
+        $url = $this->url . http_build_query($this->param);
+        if($debug){
+            var_dump($this->param);
+            echo $url,PHP_EOL;
+            exit();
+        }
+        return file_get_contents($url );
     }
 
     /**
@@ -99,7 +106,7 @@ class AliyunDNS {
         $arr = Array(
             "Action" => "UpdateDomainRecord",    // 业务类型标识，请勿修改
             "DomainName" => $domain,          // 要解析的域名
-            "RecordID" => $recordId,                       // 记录ID，留空，请勿修改
+            "RecordId" => $recordId,                       // 记录ID，留空，请勿修改
             "Value" => $value,                          // 记录值，留空，请勿修改
             "RR" => $RR,                         // 解析主机名，改为你需要的
             "Type" => $type,                          // 记录类型，请勿修改
@@ -137,13 +144,12 @@ class AliyunDNS {
      */
     public static function localOutIp()
     {
-        $outIpApi='https://myip.biturl.top/';
+        $outIpApi='https://service-65vvblqg-1255315622.gz.apigw.tencentcs.com/release/client_ip';
         $localIp = file_get_contents($outIpApi);
-        $b = preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/", $localIp);
-        if ($b !==1) {
-            return false;
+        if(filter_var($localIp, FILTER_VALIDATE_IP)){
+            return $localIp;
         }
-        return $localIp;
+        return false;
     }
 }
 
@@ -163,7 +169,7 @@ foreach($records as $domain=>$subList){
                 echo "record already exist",PHP_EOL;
                 continue;
             }
-            $result = $obj->updateRecord($recordList[$subList]['RecordId'],$sub, $newIP,$domain);
+            $result = $obj->updateRecord($recordList[$sub]['RecordId'],$sub, $newIP,$domain);
             echo "update",PHP_EOL;
         }else{
             $result = $obj->addRecord($sub, $newIP, $domain);
